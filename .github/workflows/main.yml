@@ -1,0 +1,34 @@
+name: Build Branch
+on:
+  workflow_dispatch:
+  release:
+    types:
+      - published
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: restore
+      run: |
+        sh restore.sh
+    - name: build
+      run: |
+        sh build.sh
+    - name: package
+      run: |
+        cp -r artifacts/bin/csc/Debug/net472/ csc
+        zip -9 -r csc.zip csc
+    - name: Upload Package
+      id: upload-package
+      uses: actions/upload-release-asset@v1
+      
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: csc.zip
+        asset_name: csc-${{ github.event.release.tag_name }}.zip
+        asset_content_type: application/octet-stream
